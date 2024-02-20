@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.gms)
 }
 
 kotlin {
@@ -40,6 +41,10 @@ kotlin {
             implementation(libs.commonstatemachine.machine)
             implementation(libs.commonstatemachine.coroutines)
             implementation(libs.napier)
+            implementation(libs.firebase.common)
+            implementation(libs.firebase.auth)
+            implementation(libs.firebase.functions)
+            implementation(libs.firebase.firestore)
         }
 
         androidMain.dependencies {
@@ -58,7 +63,7 @@ android {
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 
     defaultConfig {
-        applicationId = "org.example.project"
+        applicationId = "com.motorro.aichat"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

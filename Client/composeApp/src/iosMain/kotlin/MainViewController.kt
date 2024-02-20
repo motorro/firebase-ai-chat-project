@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.window.ComposeUIViewController
 import com.motorro.aichat.Model
 import com.motorro.aichat.ui.MainScreen
+import platform.posix.exit
 
 fun MainViewController() = ComposeUIViewController { App() }
 
@@ -11,5 +12,9 @@ fun MainViewController() = ComposeUIViewController { App() }
 fun App() {
     val viewModel = Model()
     val viewState by viewModel.uiState.collectAsState()
-    MainScreen(viewState) { viewModel.onGesture(it) }
+    MainScreen(
+        state = viewState,
+        onComplete = { exit(0) },
+        onGesture = { viewModel.onGesture(it) }
+    )
 }

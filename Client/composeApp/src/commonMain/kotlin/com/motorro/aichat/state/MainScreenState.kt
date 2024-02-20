@@ -9,7 +9,11 @@ abstract class MainScreenState(context: MainScreenContext) : CoroutineState<Main
     /**
      * A part of [process] template to process UI gesture
      */
-    override fun doProcess(gesture: MainScreenGesture) {
-        Napier.w { "Unsupported gesture $gesture" }
+    override fun doProcess(gesture: MainScreenGesture) = when (gesture) {
+        is MainScreenGesture.Back -> {
+            Napier.d { "Back gesture. Terminating..." }
+            setMachineState(factory.terminated())
+        }
+        else -> Napier.w { "Unsupported gesture $gesture" }
     }
 }

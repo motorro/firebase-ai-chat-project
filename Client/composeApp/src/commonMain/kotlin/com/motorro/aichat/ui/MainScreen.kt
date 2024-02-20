@@ -12,13 +12,14 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextOverflow
 import com.motorro.aichat.data.MainScreenGesture
 import com.motorro.aichat.data.MainScreenUiState
 
 @Composable
-fun MainScreen(state: MainScreenUiState, onGesture: (MainScreenGesture) -> Unit) {
+fun MainScreen(state: MainScreenUiState, onComplete: () -> Unit, onGesture: (MainScreenGesture) -> Unit) {
     when(state) {
         is MainScreenUiState.Loading -> MainScreenScaffold(
             title = "Loading...",
@@ -26,6 +27,25 @@ fun MainScreen(state: MainScreenUiState, onGesture: (MainScreenGesture) -> Unit)
             onGesture = onGesture,
             content = { padding, _ -> Loading(padding) }
         )
+        is MainScreenUiState.Prompt -> MainScreenScaffold(
+            title = "Enter starting message...",
+            withBackButton = true,
+            onGesture = onGesture,
+            content = { padding, g -> Prompt(padding, state, g) }
+        )
+        is MainScreenUiState.Error -> MainScreenScaffold(
+            title = "Error",
+            withBackButton = true,
+            onGesture = onGesture,
+            content = { padding, g ->
+                FatalError(state.error, padding) { g(MainScreenGesture.Action) }
+            }
+        )
+        MainScreenUiState.Terminated -> {
+            LaunchedEffect(state) {
+                onComplete()
+            }
+        }
     }
 }
 

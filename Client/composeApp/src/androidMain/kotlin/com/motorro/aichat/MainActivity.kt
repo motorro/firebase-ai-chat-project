@@ -11,6 +11,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
 import com.motorro.aichat.data.MainScreenGesture
 import com.motorro.aichat.ui.MainScreen
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.initialize
+import io.github.aakira.napier.Napier
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,7 +22,11 @@ class MainActivity : ComponentActivity() {
         val viewModel: MainViewModel by viewModels()
         setContent {
             val state by viewModel.uiState.collectAsState()
-            MainScreen(state) { viewModel.onGesture(it) }
+            MainScreen(
+                state = state,
+                onComplete = { finish() },
+                onGesture = { viewModel.onGesture(it) }
+            )
         }
     }
 }
