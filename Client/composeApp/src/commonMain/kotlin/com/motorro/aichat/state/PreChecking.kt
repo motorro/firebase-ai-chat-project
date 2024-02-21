@@ -1,6 +1,5 @@
 package com.motorro.aichat.state
 
-import com.motorro.aichat.data.MainScreenGesture
 import com.motorro.aichat.data.MainScreenUiState
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth

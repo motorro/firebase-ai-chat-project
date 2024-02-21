@@ -33,6 +33,12 @@ fun MainScreen(state: MainScreenUiState, onComplete: () -> Unit, onGesture: (Mai
             onGesture = onGesture,
             content = { padding, g -> Prompt(padding, state, g) }
         )
+        is MainScreenUiState.Chat -> MainScreenScaffold(
+            title = "Chat",
+            withBackButton = true,
+            onGesture = onGesture,
+            content = { padding, g -> Chat(padding, state, g) }
+        )
         is MainScreenUiState.Error -> MainScreenScaffold(
             title = "Error",
             withBackButton = true,

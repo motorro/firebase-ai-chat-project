@@ -1,8 +1,8 @@
 import org.jetbrains.compose.ExperimentalComposeLibrary
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.gms)
@@ -12,7 +12,7 @@ kotlin {
     androidTarget {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "1.8"
+                jvmTarget = "11"
             }
         }
     }
@@ -38,6 +38,7 @@ kotlin {
             implementation(compose.components.resources)
             implementation(libs.kotlin.coroutines.core)
             implementation(libs.kotlin.serialization.core)
+            implementation(libs.kotlin.datetime)
             implementation(libs.commonstatemachine.machine)
             implementation(libs.commonstatemachine.coroutines)
             implementation(libs.napier)
@@ -48,8 +49,10 @@ kotlin {
         }
 
         androidMain.dependencies {
+            implementation(libs.kotlin.coroutines.android)
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(project.dependencies.platform(libs.firebase.android))
         }
     }
 }
@@ -80,8 +83,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     dependencies {
         debugImplementation(libs.compose.ui.tooling)

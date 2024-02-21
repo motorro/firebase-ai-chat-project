@@ -7,6 +7,7 @@ import io.github.aakira.napier.Napier
 class Error(
     context: MainScreenContext,
     private val error: Throwable,
+    private val onBack: () -> MainScreenState,
     private val onAction: () -> MainScreenState
 ) : MainScreenState(context) {
     /**
@@ -20,6 +21,10 @@ class Error(
      * A part of [process] template to process UI gesture
      */
     override fun doProcess(gesture: MainScreenGesture) = when (gesture) {
+        is MainScreenGesture.Back -> {
+            Napier.d { "Back pressed. Returning..."}
+            setMachineState(onBack())
+        }
         is MainScreenGesture.Action -> {
             Napier.d { "Action gesture. Retrying..."}
             setMachineState(onAction())
