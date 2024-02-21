@@ -56,15 +56,20 @@ const dispatcher: ToolsDispatcher<CalculateChatData> = function(
     args: Record<string, unknown>
 ): CalculateChatData | Promise<CalculateChatData> {
     switch (name) {
+        case "getSum":
+            logger.d("Getting current state...");
+            return {
+                sum: data.sum
+            };
         case "add":
             logger.d("Adding: ", args);
             return {
-                sum: data.sum + (args[0] as number)
+                sum: data.sum + (args.value as number)
             };
         case "subtract":
             logger.d("Subtracting: ", args);
             return {
-                sum: data.sum - (args[0] as number)
+                sum: data.sum - (args.value as number)
             };
         default:
             logger.e("Unimplemented function call: ", name, args);
