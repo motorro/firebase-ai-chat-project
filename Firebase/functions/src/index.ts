@@ -9,7 +9,6 @@ if (0 === admin.getApps().length) {
 import {
     Logger,
     setLogger,
-    AiWrapper,
     OpenAiWrapper,
     ToolsDispatcher,
     ChatState,
@@ -84,7 +83,8 @@ const dispatchers: Record<string, ToolsDispatcher<any>> = {
 // Used to inject test OpenAi mock
 const options: CallableOptions = {
     secrets: [openAiApiKey],
-    region: region
+    region: region,
+    invoker: "public"
 };
 
 const db = firestore();
@@ -163,11 +163,9 @@ export const calculator = onTaskDispatched<ChatCommand>(
         region: region
     },
     async (req) => {
-        // Used to inject test OpenAi mock
-        const ai = ("aiWrapper" in global && (global.aiWrapper as AiWrapper)) || new OpenAiWrapper(
+        const ai = new OpenAiWrapper(
             new OpenAI({apiKey: openAiApiKey.value()})
         );
-
         await chatFactory.worker(ai, dispatchers).runCommand(req.data);
     }
 );
