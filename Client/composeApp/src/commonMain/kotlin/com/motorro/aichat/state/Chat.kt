@@ -11,16 +11,18 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.Direction
 import dev.gitlive.firebase.firestore.DocumentReference
+import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.firestore.orderBy
 import dev.gitlive.firebase.firestore.where
+import dev.gitlive.firebase.functions.FirebaseFunctions
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-class Chat(context: MainScreenContext, private val chatDocument: DocumentReference) : MainScreenState(context) {
-
+class Chat(context: MainScreenContext, documentPath: String, functions: FirebaseFunctions) : MainScreenState(context) {
+    private val chatDocument: DocumentReference = Firebase.firestore.document(documentPath)
     private val userId = requireNotNull(Firebase.auth.currentUser?.uid) { "User not logged in" }
     private val postMessage = functions.httpsCallable("postToCalculate")
 
@@ -38,10 +40,11 @@ class Chat(context: MainScreenContext, private val chatDocument: DocumentReferen
         subscribe()
     }
 
+    @Suppress("REDUNDANT_ELSE_IN_WHEN")
     override fun doProcess(gesture: MainScreenGesture) = when (gesture) {
         MainScreenGesture.Back -> {
             Napier.d { "Back pressed. Terminating chat..." }
-            setMachineState(factory.closingChat(chatDocument))
+            setMachineState(factory.closingChat(chatDocument.path))
         }
         is MainScreenGesture.Text -> {
             message = gesture.text
@@ -69,7 +72,7 @@ class Chat(context: MainScreenContext, private val chatDocument: DocumentReferen
             }
             .catch {
                 Napier.e(it) { "Error subscribing to chat" }
-                setMachineState(factory.chatError(it, chatDocument))
+                setMachineState(factory.chatError(it, chatDocument.path))
             }
             .launchIn(stateScope)
     }
@@ -90,7 +93,7 @@ class Chat(context: MainScreenContext, private val chatDocument: DocumentReferen
             }
             .catch {
                 Napier.e(it) { "Error subscribing to chat messages" }
-                setMachineState(factory.chatError(it, chatDocument))
+                setMachineState(factory.chatError(it, chatDocument.path))
             }
             .launchIn(stateScope)
     }
@@ -108,7 +111,7 @@ class Chat(context: MainScreenContext, private val chatDocument: DocumentReferen
                 sending = false
             } catch (e: Throwable) {
                 Napier.e(e) { "Error sending message" }
-                setMachineState(factory.chatError(e, chatDocument))
+                setMachineState(factory.chatError(e, chatDocument.path))
             }
         }
     }

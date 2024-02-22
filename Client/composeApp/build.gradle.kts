@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.gms)
+    alias(libs.plugins.google.ksp)
+    alias(libs.plugins.test.mockmp.plugin)
 }
 
 kotlin {
@@ -46,6 +48,14 @@ kotlin {
             implementation(libs.firebase.auth)
             implementation(libs.firebase.functions)
             implementation(libs.firebase.firestore)
+        }
+
+        val commonTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.kotlin.test.junit)
+                implementation(libs.kotlin.coroutines.test)
+            }
         }
 
         androidMain.dependencies {
@@ -91,3 +101,7 @@ android {
     }
 }
 
+mockmp {
+    usesHelper = true
+    installWorkaround()
+}

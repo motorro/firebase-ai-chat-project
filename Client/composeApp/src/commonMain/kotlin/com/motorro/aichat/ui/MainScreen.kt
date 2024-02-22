@@ -25,7 +25,7 @@ fun MainScreen(state: MainScreenUiState, onComplete: () -> Unit, onGesture: (Mai
             title = "Loading...",
             withBackButton = false,
             onGesture = onGesture,
-            content = { padding, _ -> Loading(padding) }
+            content = { padding, _ -> Loading(padding, state) }
         )
         is MainScreenUiState.Prompt -> MainScreenScaffold(
             title = "Enter starting message...",
