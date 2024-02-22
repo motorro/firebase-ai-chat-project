@@ -80,7 +80,6 @@ const dispatchers: Record<string, ToolsDispatcher<any>> = {
     [NAME]: dispatcher
 };
 
-// Used to inject test OpenAi mock
 const options: CallableOptions = {
     secrets: [openAiApiKey],
     region: region,
@@ -150,6 +149,7 @@ export const closeCalculate = onCall2(options, async (request: CallableRequest<C
         };
     });
 });
+
 export const calculator = onTaskDispatched<ChatCommand>(
     {
         secrets: [openAiApiKey],
