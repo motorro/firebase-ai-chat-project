@@ -64,6 +64,11 @@ class Chat(context: MainScreenContext, documentPath: String, functions: Firebase
         chatDocument.snapshots
             .onEach { snapshot ->
                 val data: ChatState = snapshot.data()
+                if (ChatStatus.failed == data.status) {
+                    Napier.e { "Chat failed" }
+                    setMachineState(factory.chatError(IllegalStateException("Chat failed"), chatDocument.path))
+                    return@onEach
+                }
                 stateData = stateData.copy(
                     status = data.status,
                     data = data.data
