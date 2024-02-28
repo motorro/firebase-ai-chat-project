@@ -8,12 +8,13 @@ import androidx.compose.ui.window.rememberWindowState
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.FirebasePlatform
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.firestore
 import com.google.firebase.initialize
 import com.motorro.aichat.Model
 import com.motorro.aichat.ui.MainScreen
 import io.github.aakira.napier.LogLevel
 import io.github.aakira.napier.Napier
-import java.lang.System.exit
 
 // Configure firebase:
 // https://github.com/GitLiveApp/firebase-java-sdk?tab=readme-ov-file#initializing-the-sdk
@@ -31,6 +32,11 @@ fun main() = application {
     })
 
     val app = Firebase.initialize(Application(), options)
+    val db = Firebase.firestore(app)
+    val settings = FirebaseFirestoreSettings.Builder(db.firestoreSettings).
+        .setPersistenceEnabled(false)
+        .build()
+    db.firestoreSettings = settings
 
     val windowState = rememberWindowState(
         width = 500.dp, height = 700.dp
@@ -46,7 +52,7 @@ fun main() = application {
         val viewState by viewModel.uiState.collectAsState()
         MainScreen(
             state = viewState,
-            onComplete = { exit(0) },
+            onComplete = { exitApplication() },
             onGesture = { viewModel.onGesture(it) }
         )
     }

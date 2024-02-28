@@ -75,6 +75,7 @@ kotlin {
                 implementation(libs.firebase.java)
                 implementation(libs.okhttp)
                 implementation(libs.javax.inject)
+                implementation(compose.desktop.currentOs)
                 implementation(libs.kotlin.coroutines.swing)
             }
         }
