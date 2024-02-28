@@ -49,32 +49,28 @@ const region = "europe-west1";
 const openAiApiKey = defineSecret("OPENAI_API_KEY");
 const openAiAssistantId = defineString("OPENAI_ASSISTANT_ID");
 
-const dispatcher: ToolsDispatcher<CalculateChatData> = function(
+``const dispatcher: ToolsDispatcher<{sum: number}> = function(
     data: CalculateChatData,
     name: string,
     args: Record<string, unknown>
 ): CalculateChatData | Promise<CalculateChatData> {
     switch (name) {
         case "getSum":
-            logger.d("Getting current state...");
             return {
                 sum: data.sum
             };
         case "add":
-            logger.d("Adding: ", args);
             return {
                 sum: data.sum + (args.value as number)
             };
         case "subtract":
-            logger.d("Subtracting: ", args);
             return {
                 sum: data.sum - (args.value as number)
             };
         default:
-            logger.e("Unimplemented function call: ", name, args);
             throw new HttpsError("unimplemented", "Unimplemented function call");
     }
-};
+};``
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 const dispatchers: Record<string, ToolsDispatcher<any>> = {
     [NAME]: dispatcher
