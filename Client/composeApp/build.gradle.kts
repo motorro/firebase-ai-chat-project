@@ -74,6 +74,8 @@ kotlin {
             dependencies {
                 implementation(libs.firebase.java)
                 implementation(libs.okhttp)
+                implementation(libs.javax.inject)
+                implementation(libs.kotlin.coroutines.swing)
             }
         }
     }
