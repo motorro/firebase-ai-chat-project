@@ -55,11 +55,11 @@ class CreatingChatTest : TestsWithMocks() {
         }
 
         every { factory.chat(isNotNull()) } returns nextState
-        every { factory.chatCreationError(isNotNull(), isNotNull()) } returns nextState
+        every { factory.chatCreationError(isNotNull()) } returns nextState
 
         Dispatchers.setMain(UnconfinedTestDispatcher())
 
-        state = CreatingChat(context, testMessage, createChat)
+        state = CreatingChat(context, createChat)
     }
 
     @AfterTest
@@ -70,13 +70,13 @@ class CreatingChatTest : TestsWithMocks() {
     @Test
     fun `should create chat`() = runTest {
         val testPath = "testPath"
-        everySuspending { createChat(isNotNull()) } returns testPath
+        everySuspending { createChat() } returns testPath
 
         state.start(stateMachine)
 
         verifyWithSuspend {
             stateMachine.setUiState(isInstanceOf<MainScreenUiState.Loading>())
-            createChat(testMessage)
+            createChat()
             factory.chat(testPath)
             stateMachine.setMachineState(nextState)
         }
@@ -85,7 +85,7 @@ class CreatingChatTest : TestsWithMocks() {
     @Test
     fun `should handle error`() = runTest {
         val testError = RuntimeException("Test error")
-        everySuspending { createChat(isNotNull()) } runs {
+        everySuspending { createChat() } runs {
             throw testError
         }
 
@@ -93,8 +93,8 @@ class CreatingChatTest : TestsWithMocks() {
 
         verifyWithSuspend {
             stateMachine.setUiState(isInstanceOf<MainScreenUiState.Loading>())
-            threw { createChat(testMessage) }
-            factory.chatCreationError(testError, testMessage)
+            threw { createChat() }
+            factory.chatCreationError(testError)
             stateMachine.setMachineState(nextState)
         }
     }

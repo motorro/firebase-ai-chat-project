@@ -33,7 +33,7 @@ fun main() = application {
 
     val app = Firebase.initialize(Application(), options)
     val db = Firebase.firestore(app)
-    val settings = FirebaseFirestoreSettings.Builder(db.firestoreSettings).
+    val settings = FirebaseFirestoreSettings.Builder(db.firestoreSettings)
         .setPersistenceEnabled(false)
         .build()
     db.firestoreSettings = settings

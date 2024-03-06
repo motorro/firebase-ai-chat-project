@@ -2,7 +2,6 @@ package com.motorro.aichat.state
 
 import com.motorro.aichat.data.MainScreenGesture
 import com.motorro.aichat.data.MainScreenUiState
-import com.motorro.aichat.data.domain.CalculateChatRequest
 import com.motorro.aichat.data.domain.CalculateChatResponse
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import io.github.aakira.napier.Napier
@@ -10,7 +9,6 @@ import kotlinx.coroutines.launch
 
 class CreatingChat(
     context: MainScreenContext,
-    private val message: String,
     private val create: CreateChat
 ) : MainScreenState(context) {
     /**
@@ -25,12 +23,12 @@ class CreatingChat(
         Napier.d { "Creating chat..." }
         stateScope.launch {
             try {
-                val path = create(message)
+                val path = create()
                 Napier.d { "Chat created: $path" }
                 setMachineState(factory.chat(path))
             } catch (e: Throwable) {
                 Napier.e(e) { "Error creating chat" }
-                setMachineState(factory.chatCreationError(e, message))
+                setMachineState(factory.chatCreationError(e))
             }
         }
     }
@@ -41,7 +39,7 @@ class CreatingChat(
     override fun doProcess(gesture: MainScreenGesture) = when (gesture) {
         MainScreenGesture.Back -> {
             Napier.d { "Back pressed. Returning to prompt..."}
-            setMachineState(factory.chatPrompt(message))
+            setMachineState(factory.chatPrompt())
         }
         else -> super.doProcess(gesture)
     }
@@ -49,14 +47,14 @@ class CreatingChat(
 
 interface CreateChat {
     @Throws(Throwable::class)
-    suspend operator fun invoke(message: String): String
+    suspend operator fun invoke(): String
 
     class Impl(functions: FirebaseFunctions) : CreateChat {
         private val createChatCommand = functions.httpsCallable("calculate")
 
         @Throws(Throwable::class)
-        override suspend operator fun invoke(message: String): String {
-            val result: CalculateChatResponse = createChatCommand(CalculateChatRequest(message)).data()
+        override suspend operator fun invoke(): String {
+            val result: CalculateChatResponse = createChatCommand().data()
             return result.chatDocument
         }
     }
