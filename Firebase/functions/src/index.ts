@@ -14,7 +14,6 @@ import {
     ChatState,
     ChatCommand, factory
 } from "firebase-openai-chat";
-import {CalculateChatRequest} from "./data/CalculateChatRequest";
 import {firestore} from "firebase-admin";
 import {CalculateChatData} from "./data/CalculateChatData";
 import {defineSecret, defineString} from "firebase-functions/params";
@@ -49,7 +48,7 @@ const region = "europe-west1";
 const openAiApiKey = defineSecret("OPENAI_API_KEY");
 const openAiAssistantId = defineString("OPENAI_ASSISTANT_ID");
 
-``const dispatcher: ToolsDispatcher<{sum: number}> = function(
+const dispatcher: ToolsDispatcher<{sum: number}> = function(
     data: CalculateChatData,
     name: string,
     args: Record<string, unknown>
@@ -70,7 +69,7 @@ const openAiAssistantId = defineString("OPENAI_ASSISTANT_ID");
         default:
             throw new HttpsError("unimplemented", "Unimplemented function call");
     }
-};``
+};
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 const dispatchers: Record<string, ToolsDispatcher<any>> = {
     [NAME]: dispatcher
@@ -84,8 +83,8 @@ const options: CallableOptions = {
 
 const db = firestore();
 const chats = db.collection(CHATS) as CollectionReference<ChatState<CalculateChatData>>;
-const chatFactory = factory(firestore(), getFunctions());
-const assistantChat = chatFactory.chat("calculator", region, {});
+const chatFactory = factory(firestore(), getFunctions(), region);
+const assistantChat = chatFactory.chat("calculator", {});
 
 async function ensureAuth<DATA, RES>(request: CallableRequest<DATA>, block: (uid: string, data: DATA) => Promise<RES>): Promise<RES> {
     const uid = request.auth?.uid;
@@ -96,20 +95,15 @@ async function ensureAuth<DATA, RES>(request: CallableRequest<DATA>, block: (uid
     return await block(uid, request.data);
 }
 
-export const calculate = onCall2(options, async (request: CallableRequest<CalculateChatRequest>) => {
-    return ensureAuth(request, async (uid, data) => {
+export const calculate = onCall2(options, async (request: CallableRequest<void>) => {
+    return ensureAuth(request, async (uid) => {
         const chat = chats.doc();
-        await assistantChat.create(
+        const result = await assistantChat.create(
             chat,
             uid,
             {sum: 0},
             openAiAssistantId.value(),
             NAME
-        );
-        const result = await assistantChat.postMessage(
-            chat,
-            uid,
-            [data.message]
         );
         return {
             chatDocument: chat.path,
@@ -162,6 +156,6 @@ export const calculator = onTaskDispatched<ChatCommand>(
         const ai = new OpenAiWrapper(
             new OpenAI({apiKey: openAiApiKey.value()})
         );
-        await chatFactory.worker(ai, dispatchers).runCommand(req.data);
+        await chatFactory.worker(ai, dispatchers).dispatch(req);
     }
 );
