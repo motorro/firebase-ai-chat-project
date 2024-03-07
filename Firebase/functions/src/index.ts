@@ -14,6 +14,7 @@ import {
     ChatState,
     factory
 } from "firebase-openai-chat";
+import {CalculateChatRequest} from "./data/CalculateChatRequest";
 import {firestore} from "firebase-admin";
 import {CalculateChatData} from "./data/CalculateChatData";
 import {defineSecret, defineString} from "firebase-functions/params";
@@ -84,7 +85,7 @@ const options: CallableOptions = {
 const db = firestore();
 const chats = db.collection(CHATS) as CollectionReference<ChatState<CalculateChatData>>;
 const chatFactory = factory(firestore(), getFunctions(), region);
-const assistantChat = chatFactory.chat("calculator", {});
+const assistantChat = chatFactory.chat("calculator");
 
 async function ensureAuth<DATA, RES>(request: CallableRequest<DATA>, block: (uid: string, data: DATA) => Promise<RES>): Promise<RES> {
     const uid = request.auth?.uid;
@@ -95,15 +96,16 @@ async function ensureAuth<DATA, RES>(request: CallableRequest<DATA>, block: (uid
     return await block(uid, request.data);
 }
 
-export const calculate = onCall2(options, async (request: CallableRequest<void>) => {
-    return ensureAuth(request, async (uid) => {
+export const calculate = onCall2(options, async (request: CallableRequest<CalculateChatRequest>) => {
+    return ensureAuth(request, async (uid, data) => {
         const chat = chats.doc();
         const result = await assistantChat.create(
             chat,
             uid,
             {sum: 0},
             openAiAssistantId.value(),
-            NAME
+            NAME,
+            [data.message]
         );
         return {
             chatDocument: chat.path,
