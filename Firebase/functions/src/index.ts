@@ -12,7 +12,7 @@ import {
     OpenAiWrapper,
     ToolsDispatcher,
     ChatState,
-    ChatCommand, factory
+    factory
 } from "firebase-openai-chat";
 import {firestore} from "firebase-admin";
 import {CalculateChatData} from "./data/CalculateChatData";
@@ -140,7 +140,7 @@ export const closeCalculate = onCall2(options, async (request: CallableRequest<C
     });
 });
 
-export const calculator = onTaskDispatched<ChatCommand>(
+export const calculator = onTaskDispatched(
     {
         secrets: [openAiApiKey],
         retryConfig: {
