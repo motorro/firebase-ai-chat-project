@@ -27,7 +27,7 @@ class Chat(context: MainScreenContext, documentPath: String, functions: Firebase
     private val postMessage = functions.httpsCallable("postToCalculate")
 
     private var stateData: ChatStateData = ChatStateData(
-        ChatStatus.created,
+        ChatStatus.processing,
         CalculateChatData(0),
         emptyList()
     )

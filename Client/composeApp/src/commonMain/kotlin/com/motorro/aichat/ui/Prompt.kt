@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,6 +23,13 @@ fun Prompt(contentPadding: PaddingValues, state: MainScreenUiState.Prompt, onGes
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth().weight(2f).padding(4.dp),
+            value = state.message,
+            singleLine = false,
+            onValueChange = { onGesture(MainScreenGesture.Text(it)) }
+        )
+
         Button(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             enabled = state.actionEnabled,

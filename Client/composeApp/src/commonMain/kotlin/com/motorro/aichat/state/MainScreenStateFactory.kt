@@ -9,9 +9,9 @@ interface MainScreenStateFactory {
     fun preChecking(): MainScreenState
     fun createAnonymousUser(): MainScreenState
     fun preCheckError(error: Throwable): MainScreenState
-    fun chatPrompt(): MainScreenState
-    fun creatingChat(): MainScreenState
-    fun chatCreationError(error: Throwable): MainScreenState
+    fun chatPrompt(message: String? = null): MainScreenState
+    fun creatingChat(message: String): MainScreenState
+    fun chatCreationError(error: Throwable, message: String): MainScreenState
     fun chat(chatDocumentPath: String): MainScreenState
     fun chatError(error: Throwable, chatDocumentPath: String): MainScreenState
     fun closingChat(chatDocumentPath: String): MainScreenState
@@ -33,16 +33,17 @@ class MainScreenStateFactoryImpl : MainScreenStateFactory {
         onBack = { terminated() },
         onAction = { preChecking() }
     )
-    override fun chatPrompt(): MainScreenState = ChatPrompt(context)
-    override fun creatingChat(): MainScreenState = CreatingChat(
+    override fun chatPrompt(message: String?): MainScreenState = ChatPrompt(context, message)
+    override fun creatingChat(message: String): MainScreenState = CreatingChat(
         context,
+        message,
         CreateChat.Impl(functions)
     )
-    override fun chatCreationError(error: Throwable): MainScreenState = Error(
+    override fun chatCreationError(error: Throwable, message: String): MainScreenState = Error(
         context,
         error,
-        { chatPrompt() },
-        { creatingChat() }
+        { chatPrompt(message) },
+        { creatingChat(message) }
     )
     override fun chat(chatDocumentPath: String): MainScreenState = Chat(
         context,
