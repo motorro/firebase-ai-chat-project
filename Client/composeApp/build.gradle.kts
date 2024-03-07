@@ -1,4 +1,5 @@
 import org.jetbrains.compose.ExperimentalComposeLibrary
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -14,11 +15,15 @@ kotlin {
     androidTarget {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = "17"
             }
         }
     }
-    
+
+    jvm("desktop") {
+        jvmToolchain(17)
+    }
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -64,6 +69,16 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(project.dependencies.platform(libs.firebase.android))
         }
+
+        val desktopMain by getting {
+            dependencies {
+                implementation(libs.firebase.java)
+                implementation(libs.okhttp)
+                implementation(libs.javax.inject)
+                implementation(compose.desktop.currentOs)
+                implementation(libs.kotlin.coroutines.swing)
+            }
+        }
     }
 }
 
@@ -93,11 +108,22 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     dependencies {
         debugImplementation(libs.compose.ui.tooling)
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "MainKt"
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "aichat"
+            packageVersion = "1.0.0"
+        }
     }
 }
 

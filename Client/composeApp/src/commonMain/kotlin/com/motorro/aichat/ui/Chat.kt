@@ -236,7 +236,6 @@ private fun ChatMessage.isAssistant(): Boolean {
 }
 
 private val userEnabledStates = setOf(
-    ChatStatus.created,
     ChatStatus.userInput
 )
 private fun MainScreenUiState.Chat.isSendEnable(): Boolean {

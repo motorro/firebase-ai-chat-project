@@ -12,7 +12,7 @@ import {
     OpenAiWrapper,
     ToolsDispatcher,
     ChatState,
-    ChatCommand, factory
+    factory
 } from "firebase-openai-chat";
 import {CalculateChatRequest} from "./data/CalculateChatRequest";
 import {firestore} from "firebase-admin";
@@ -49,29 +49,25 @@ const region = "europe-west1";
 const openAiApiKey = defineSecret("OPENAI_API_KEY");
 const openAiAssistantId = defineString("OPENAI_ASSISTANT_ID");
 
-const dispatcher: ToolsDispatcher<CalculateChatData> = function(
+const dispatcher: ToolsDispatcher<{sum: number}> = function(
     data: CalculateChatData,
     name: string,
     args: Record<string, unknown>
 ): CalculateChatData | Promise<CalculateChatData> {
     switch (name) {
         case "getSum":
-            logger.d("Getting current state...");
             return {
                 sum: data.sum
             };
         case "add":
-            logger.d("Adding: ", args);
             return {
                 sum: data.sum + (args.value as number)
             };
         case "subtract":
-            logger.d("Subtracting: ", args);
             return {
                 sum: data.sum - (args.value as number)
             };
         default:
-            logger.e("Unimplemented function call: ", name, args);
             throw new HttpsError("unimplemented", "Unimplemented function call");
     }
 };
@@ -88,8 +84,8 @@ const options: CallableOptions = {
 
 const db = firestore();
 const chats = db.collection(CHATS) as CollectionReference<ChatState<CalculateChatData>>;
-const chatFactory = factory(firestore(), getFunctions());
-const assistantChat = chatFactory.chat("calculator", region, {});
+const chatFactory = factory(firestore(), getFunctions(), region);
+const assistantChat = chatFactory.chat("calculator");
 
 async function ensureAuth<DATA, RES>(request: CallableRequest<DATA>, block: (uid: string, data: DATA) => Promise<RES>): Promise<RES> {
     const uid = request.auth?.uid;
@@ -103,16 +99,12 @@ async function ensureAuth<DATA, RES>(request: CallableRequest<DATA>, block: (uid
 export const calculate = onCall2(options, async (request: CallableRequest<CalculateChatRequest>) => {
     return ensureAuth(request, async (uid, data) => {
         const chat = chats.doc();
-        await assistantChat.create(
+        const result = await assistantChat.create(
             chat,
             uid,
             {sum: 0},
             openAiAssistantId.value(),
-            NAME
-        );
-        const result = await assistantChat.postMessage(
-            chat,
-            uid,
+            NAME,
             [data.message]
         );
         return {
@@ -150,7 +142,7 @@ export const closeCalculate = onCall2(options, async (request: CallableRequest<C
     });
 });
 
-export const calculator = onTaskDispatched<ChatCommand>(
+export const calculator = onTaskDispatched(
     {
         secrets: [openAiApiKey],
         retryConfig: {
@@ -166,6 +158,6 @@ export const calculator = onTaskDispatched<ChatCommand>(
         const ai = new OpenAiWrapper(
             new OpenAI({apiKey: openAiApiKey.value()})
         );
-        await chatFactory.worker(ai, dispatchers).runCommand(req.data);
+        await chatFactory.worker(ai, dispatchers).dispatch(req);
     }
 );
