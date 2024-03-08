@@ -23,7 +23,7 @@
     "@types/node": "^18.16.3",
     "firebase-admin": "^12.0.0",
     "firebase-functions": "^4.7.0",
-    "firebase-openai-chat": "^0.0.17",
+    "firebase-openai-chat": "^1.0.0",
     "openai": "^4.28.0",
     "ts-node": "^10.9.1"
   },
