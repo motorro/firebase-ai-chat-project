@@ -27,6 +27,7 @@ import OpenAI from "openai";
 import {CHATS} from "./data/Collections";
 import {CallableOptions, CallableRequest, HttpsError, onCall as onCall2} from "firebase-functions/v2/https";
 import {getFunctions} from "firebase-admin/functions";
+import {onDocumentCreated, onDocumentUpdated} from "firebase-functions/v2/firestore";
 
 export const NAME = "calculator";
 const logger: Logger = {
@@ -159,5 +160,24 @@ export const calculator = onTaskDispatched(
             new OpenAI({apiKey: openAiApiKey.value()})
         );
         await chatFactory.worker(ai, dispatchers).dispatch(req);
+    }
+);
+
+exports.onChatCreated = onDocumentCreated(
+    {
+        document: `${CHATS}/{chatId}`,
+        region: region
+    },
+    async (event) => {
+        logger.d("Chat created", event.document);
+    }
+);
+exports.onChatUpdated = onDocumentUpdated(
+    {
+        document: `${CHATS}/{chatId}`,
+        region: region
+    },
+    async (event) => {
+        logger.d("Chat updated", event.document);
     }
 );
