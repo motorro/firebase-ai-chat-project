@@ -11,9 +11,9 @@ import {
     setLogger,
     OpenAiWrapper,
     ToolsDispatcher,
-    ChatState,
-    factory
-} from "firebase-openai-chat";
+    factory,
+    OpenAiChatState
+} from "@motorro/firebase-ai-chat-openai";
 import {CalculateChatRequest} from "./data/CalculateChatRequest";
 import {firestore} from "firebase-admin";
 import {CalculateChatData} from "./data/CalculateChatData";
@@ -84,7 +84,7 @@ const options: CallableOptions = {
 };
 
 const db = firestore();
-const chats = db.collection(CHATS) as CollectionReference<ChatState<CalculateChatData>>;
+const chats = db.collection(CHATS) as CollectionReference<OpenAiChatState<CalculateChatData>>;
 const chatFactory = factory(firestore(), getFunctions(), region);
 const assistantChat = chatFactory.chat("calculator");
 
@@ -104,7 +104,7 @@ export const calculate = onCall2(options, async (request: CallableRequest<Calcul
             chat,
             uid,
             {sum: 0},
-            openAiAssistantId.value(),
+            {assistantId: openAiAssistantId.value()},
             NAME,
             [data.message]
         );
@@ -118,7 +118,7 @@ export const calculate = onCall2(options, async (request: CallableRequest<Calcul
 export const postToCalculate = onCall2(options, async (request: CallableRequest<PostCalculateRequest>) => {
     return ensureAuth(request, async (uid, data) => {
         const result = await assistantChat.postMessage(
-            db.doc(data.chatDocument) as DocumentReference<ChatState<CalculateChatData>>,
+            db.doc(data.chatDocument) as DocumentReference<OpenAiChatState<CalculateChatData>>,
             uid,
             [data.message]
         );
@@ -132,7 +132,7 @@ export const postToCalculate = onCall2(options, async (request: CallableRequest<
 export const closeCalculate = onCall2(options, async (request: CallableRequest<CloseCalculateRequest>) => {
     return ensureAuth(request, async (uid, data) => {
         const result = await assistantChat.closeChat(
-            db.doc(data.chatDocument) as DocumentReference<ChatState<CalculateChatData>>,
+            db.doc(data.chatDocument) as DocumentReference<OpenAiChatState<CalculateChatData>>,
             uid,
         );
         return {

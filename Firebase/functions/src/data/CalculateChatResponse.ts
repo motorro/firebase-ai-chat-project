@@ -1,4 +1,4 @@
-import {ChatStatus} from "firebase-openai-chat";
+import {ChatStatus} from "@motorro/firebase-ai-chat-openai";
 import {CalculateChatData} from "./CalculateChatData";
 
 /**
