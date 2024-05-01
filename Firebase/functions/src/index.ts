@@ -12,7 +12,7 @@ import {
     OpenAiWrapper,
     ToolsDispatcher,
     factory,
-    OpenAiChatState
+    OpenAiChatState, OpenAiAssistantConfig
 } from "@motorro/firebase-ai-chat-openai";
 import {CalculateChatRequest} from "./data/CalculateChatRequest";
 import {firestore} from "firebase-admin";
@@ -27,7 +27,6 @@ import OpenAI from "openai";
 import {CHATS} from "./data/Collections";
 import {CallableOptions, CallableRequest, HttpsError, onCall as onCall2} from "firebase-functions/v2/https";
 import {getFunctions} from "firebase-admin/functions";
-import {onDocumentCreated, onDocumentUpdated} from "firebase-functions/v2/firestore";
 
 export const NAME = "calculator";
 const logger: Logger = {
@@ -100,12 +99,16 @@ async function ensureAuth<DATA, RES>(request: CallableRequest<DATA>, block: (uid
 export const calculate = onCall2(options, async (request: CallableRequest<CalculateChatRequest>) => {
     return ensureAuth(request, async (uid, data) => {
         const chat = chats.doc();
+        const config: OpenAiAssistantConfig = {
+            engine: "openai",
+            assistantId: openAiAssistantId.value(),
+            dispatcherId: NAME
+        };
         const result = await assistantChat.create(
             chat,
             uid,
             {sum: 0},
-            {assistantId: openAiAssistantId.value()},
-            NAME,
+            config,
             [data.message]
         );
         return {
@@ -160,24 +163,5 @@ export const calculator = onTaskDispatched(
             new OpenAI({apiKey: openAiApiKey.value()})
         );
         await chatFactory.worker(ai, dispatchers).dispatch(req);
-    }
-);
-
-exports.onChatCreated = onDocumentCreated(
-    {
-        document: `${CHATS}/{chatId}`,
-        region: region
-    },
-    async (event) => {
-        logger.d("Chat created", event.document);
-    }
-);
-exports.onChatUpdated = onDocumentUpdated(
-    {
-        document: `${CHATS}/{chatId}`,
-        region: region
-    },
-    async (event) => {
-        logger.d("Chat updated", event.document);
     }
 );
