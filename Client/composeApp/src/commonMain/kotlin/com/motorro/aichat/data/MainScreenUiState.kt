@@ -7,6 +7,7 @@ import com.motorro.aichat.data.domain.ChatStatus
 
 sealed class MainScreenUiState {
     data class Loading(val message: String): MainScreenUiState()
+    data class LoginPassword(val credentials: Credentials): MainScreenUiState()
     data class Prompt(val message: String, val actionEnabled: Boolean): MainScreenUiState()
     @Immutable
     data class Chat(

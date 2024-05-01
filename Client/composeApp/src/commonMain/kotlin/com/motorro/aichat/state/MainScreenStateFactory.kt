@@ -1,13 +1,16 @@
 package com.motorro.aichat.state
 
 import com.motorro.aichat.Constants.REGION
+import com.motorro.aichat.data.Credentials
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import dev.gitlive.firebase.functions.functions
 
 interface MainScreenStateFactory {
     fun preChecking(): MainScreenState
-    fun createAnonymousUser(): MainScreenState
+    fun loginPassword(credentials: Credentials = Credentials()): MainScreenState
+    fun loggingInUser(credentials: Credentials): MainScreenState
+    fun loginError(error: Throwable, credentials: Credentials): MainScreenState
     fun preCheckError(error: Throwable): MainScreenState
     fun chatPrompt(message: String? = null): MainScreenState
     fun creatingChat(message: String): MainScreenState
@@ -26,12 +29,19 @@ class MainScreenStateFactoryImpl : MainScreenStateFactory {
     }
 
     override fun preChecking(): MainScreenState = PreChecking(context)
-    override fun createAnonymousUser(): MainScreenState = CreatingUser(context)
     override fun preCheckError(error: Throwable): MainScreenState = Error(
         context = context,
         error = error,
         onBack = { terminated() },
         onAction = { preChecking() }
+    )
+    override fun loginPassword(credentials: Credentials): MainScreenState = LoginPassword(context, credentials)
+    override fun loggingInUser(credentials: Credentials): MainScreenState = LogginInUser(context, credentials)
+    override fun loginError(error: Throwable, credentials: Credentials): MainScreenState = Error(
+        context,
+        error,
+        { loginPassword(credentials) },
+        { terminated() }
     )
     override fun chatPrompt(message: String?): MainScreenState = ChatPrompt(context, message)
     override fun creatingChat(message: String): MainScreenState = CreatingChat(

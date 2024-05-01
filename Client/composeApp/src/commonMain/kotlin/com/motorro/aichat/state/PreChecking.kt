@@ -21,7 +21,7 @@ class PreChecking(context: MainScreenContext) : MainScreenState(context) {
         }
         if (null == user) {
             Napier.d { "User not authenticated, switching to anonymous user creation" }
-            setMachineState(factory.createAnonymousUser())
+            setMachineState(factory.loginPassword())
         } else {
             Napier.d { "User authenticated: ${user.displayName}" }
             setMachineState(factory.chatPrompt())

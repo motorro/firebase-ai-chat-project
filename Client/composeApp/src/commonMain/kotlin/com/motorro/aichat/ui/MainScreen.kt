@@ -27,6 +27,12 @@ fun MainScreen(state: MainScreenUiState, onComplete: () -> Unit, onGesture: (Mai
             onGesture = onGesture,
             content = { padding, _ -> Loading(padding, state) }
         )
+        is MainScreenUiState.LoginPassword -> MainScreenScaffold(
+            title = "Login",
+            withBackButton = true,
+            onGesture = onGesture,
+            content = { padding, _ -> Login(padding, state, onGesture) }
+        )
         is MainScreenUiState.Prompt -> MainScreenScaffold(
             title = "Enter starting message...",
             withBackButton = true,
