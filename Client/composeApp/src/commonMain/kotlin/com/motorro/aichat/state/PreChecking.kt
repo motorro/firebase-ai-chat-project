@@ -24,7 +24,7 @@ class PreChecking(context: MainScreenContext) : MainScreenState(context) {
             setMachineState(factory.loginPassword())
         } else {
             Napier.d { "User authenticated: ${user.displayName}" }
-            setMachineState(factory.chatPrompt())
+            setMachineState(factory.engines())
         }
     }
 }

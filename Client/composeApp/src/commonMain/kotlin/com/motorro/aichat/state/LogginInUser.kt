@@ -32,7 +32,7 @@ class LogginInUser(context: MainScreenContext, private val credentials: Credenti
             }
 
             Napier.d { "User created: ${user.uid}" }
-            setMachineState(factory.chatPrompt())
+            setMachineState(factory.engines())
         }
     }
 }

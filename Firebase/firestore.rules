@@ -10,7 +10,16 @@ service cloud.firestore {
       return request.auth.uid == resource.data.userId;
     }
 
-	match /chats/{chat} {
+	match /openAiChats/{chat} {
+      allow read: if isAuthenticated() && isOwner();
+      allow write: if false;
+
+      match /messages/{message} {
+        allow read: if isAuthenticated() && isOwner();
+        allow write: if false;
+      }
+    }
+	match /vertexAiChats/{chat} {
       allow read: if isAuthenticated() && isOwner();
       allow write: if false;
 

@@ -40,7 +40,6 @@ class Chat(context: MainScreenContext, documentPath: String, functions: Firebase
         subscribe()
     }
 
-    @Suppress("REDUNDANT_ELSE_IN_WHEN")
     override fun doProcess(gesture: MainScreenGesture) = when (gesture) {
         MainScreenGesture.Back -> {
             Napier.d { "Back pressed. Terminating chat..." }
@@ -65,8 +64,8 @@ class Chat(context: MainScreenContext, documentPath: String, functions: Firebase
             .onEach { snapshot ->
                 val data: ChatState = snapshot.data()
                 if (ChatStatus.failed == data.status) {
-                    Napier.e { "Chat failed" }
-                    setMachineState(factory.chatError(IllegalStateException("Chat failed"), chatDocument.path))
+                    Napier.e { "Chat failed: ${data.lastError}" }
+                    setMachineState(factory.chatError(IllegalStateException("Chat failed: ${data.lastError}"), chatDocument.path))
                     return@onEach
                 }
                 stateData = stateData.copy(
@@ -86,6 +85,7 @@ class Chat(context: MainScreenContext, documentPath: String, functions: Firebase
         chatDocument.collection("messages")
             .where { "userId".equalTo(userId) }
             .orderBy("createdAt", Direction.ASCENDING)
+            .orderBy("inBatchSortIndex", Direction.ASCENDING)
             .snapshots
             .onEach { snapshots ->
                 stateData = stateData.copy(
@@ -111,7 +111,7 @@ class Chat(context: MainScreenContext, documentPath: String, functions: Firebase
             sending = true
             render()
             try {
-                postMessage(PostCalculateRequest(chatDocument.path, message))
+                postMessage(PostCalculateRequest(chatDocument.path, message, selectedEngine.id))
                 message = ""
                 sending = false
             } catch (e: Throwable) {
@@ -123,6 +123,7 @@ class Chat(context: MainScreenContext, documentPath: String, functions: Firebase
 
     private fun render() {
         setUiState(MainScreenUiState.Chat(
+            selectedEngine,
             stateData.status,
             stateData.data,
             stateData.messages,

@@ -33,6 +33,12 @@ fun MainScreen(state: MainScreenUiState, onComplete: () -> Unit, onGesture: (Mai
             onGesture = onGesture,
             content = { padding, _ -> Login(padding, state, onGesture) }
         )
+        is MainScreenUiState.Engines -> MainScreenScaffold(
+            title = "Select AI Engine",
+            withBackButton = true,
+            onGesture = onGesture,
+            content = { padding, _ -> Engines(padding, state, onGesture) }
+        )
         is MainScreenUiState.Prompt -> MainScreenScaffold(
             title = "Enter starting message...",
             withBackButton = true,
@@ -40,7 +46,7 @@ fun MainScreen(state: MainScreenUiState, onComplete: () -> Unit, onGesture: (Mai
             content = { padding, g -> Prompt(padding, state, g) }
         )
         is MainScreenUiState.Chat -> MainScreenScaffold(
-            title = "Chat",
+            title = state.engine.name,
             withBackButton = true,
             onGesture = onGesture,
             content = { padding, g -> Chat(padding, state, g) }

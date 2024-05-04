@@ -11,5 +11,6 @@ data class ChatState(
     val data: CalculateChatData,
     val lastMessageId: String?,
     val createdAt: Timestamp,
-    val updatedAt: Timestamp
+    val updatedAt: Timestamp,
+    val lastError: String?
 )

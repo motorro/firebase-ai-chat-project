@@ -4,6 +4,7 @@ import com.motorro.aichat.data.MainScreenGesture
 import com.motorro.aichat.data.MainScreenUiState
 import com.motorro.aichat.data.domain.CalculateChatRequest
 import com.motorro.aichat.data.domain.CalculateChatResponse
+import com.motorro.aichat.data.domain.Engine
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
@@ -25,7 +26,7 @@ class CreatingChat(
         Napier.d { "Creating chat..." }
         stateScope.launch {
             try {
-                val path = create(message)
+                val path = create(message, selectedEngine)
                 Napier.d { "Chat created: $path" }
                 setMachineState(factory.chat(path))
             } catch (e: Throwable) {
@@ -48,15 +49,13 @@ class CreatingChat(
 }
 
 interface CreateChat {
-    @Throws(Throwable::class)
-    suspend operator fun invoke(message: String): String
+    suspend operator fun invoke(message: String, engine: Engine): String
 
     class Impl(functions: FirebaseFunctions) : CreateChat {
         private val createChatCommand = functions.httpsCallable("calculate")
 
-        @Throws(Throwable::class)
-        override suspend operator fun invoke(message: String): String {
-            val result: CalculateChatResponse = createChatCommand(CalculateChatRequest(message)).data()
+        override suspend operator fun invoke(message: String, engine: Engine): String {
+            val result: CalculateChatResponse = createChatCommand(CalculateChatRequest(message, engine.id)).data()
             return result.chatDocument
         }
     }

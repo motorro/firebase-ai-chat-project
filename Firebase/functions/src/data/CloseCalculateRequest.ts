@@ -1,6 +1,8 @@
+import {WithEngine} from "./WithEngine";
+
 /**
  * Close chat
  */
-export interface CloseCalculateRequest {
+export interface CloseCalculateRequest extends WithEngine {
     readonly chatDocument: string
 }

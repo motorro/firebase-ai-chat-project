@@ -5,7 +5,7 @@ import {AssistantCreateParams} from "openai/src/resources/beta/assistants/assist
 const instructions: string = `
 You are a calculator which can add and subtract integers to an accumulated value
 - The current accumulated value is stored in application state. 
-- Call 'getState' function to get current value
+- Call 'getSum' function to get current value
 - If user asks you to add some value, call 'add' function and supply the argument provided by user
 - If user asks you to subtract some value, call 'subtract' function and supply the argument provided by user
 - Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous.
@@ -15,7 +15,7 @@ const tools: Array<AssistantCreateParams.AssistantToolsFunction> = [
     {
         type: "function",
         function: {
-            name: "getState",
+            name: "getSum",
             description: "Returns current accumulated value",
             parameters: {
                 type: "object",

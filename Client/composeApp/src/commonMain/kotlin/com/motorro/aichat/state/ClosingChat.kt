@@ -18,11 +18,11 @@ class ClosingChat(context: MainScreenContext, private val document: String, func
         Napier.d { "Closing chat..." }
         stateScope.launch {
             try {
-                closeCommand(CloseCalculateRequest(document))
-                setMachineState(factory.terminated())
+                closeCommand(CloseCalculateRequest(document, selectedEngine.id))
+                setMachineState(factory.engines())
             } catch (e: Throwable) {
                 Napier.e(e) { "Error closing chat" }
-                setMachineState(factory.terminated())
+                setMachineState(factory.engines())
             }
         }
     }

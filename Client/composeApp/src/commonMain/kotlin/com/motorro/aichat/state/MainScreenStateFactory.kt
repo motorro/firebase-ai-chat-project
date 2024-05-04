@@ -2,6 +2,7 @@ package com.motorro.aichat.state
 
 import com.motorro.aichat.Constants.REGION
 import com.motorro.aichat.data.Credentials
+import com.motorro.aichat.data.domain.Engine
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import dev.gitlive.firebase.functions.functions
@@ -12,6 +13,8 @@ interface MainScreenStateFactory {
     fun loggingInUser(credentials: Credentials): MainScreenState
     fun loginError(error: Throwable, credentials: Credentials): MainScreenState
     fun preCheckError(error: Throwable): MainScreenState
+    fun engines(): MainScreenState
+    fun enginesError(error: Throwable): MainScreenState
     fun chatPrompt(message: String? = null): MainScreenState
     fun creatingChat(message: String): MainScreenState
     fun chatCreationError(error: Throwable, message: String): MainScreenState
@@ -26,6 +29,7 @@ class MainScreenStateFactoryImpl : MainScreenStateFactory {
     private val functions: FirebaseFunctions = Firebase.functions(region = REGION)
     private val context: MainScreenContext = object : MainScreenContext {
         override val factory: MainScreenStateFactory = this@MainScreenStateFactoryImpl
+        override var engine: Engine? = null
     }
 
     override fun preChecking(): MainScreenState = PreChecking(context)
@@ -40,8 +44,16 @@ class MainScreenStateFactoryImpl : MainScreenStateFactory {
     override fun loginError(error: Throwable, credentials: Credentials): MainScreenState = Error(
         context,
         error,
-        { loginPassword(credentials) },
-        { terminated() }
+        { terminated() },
+        { loginPassword(credentials) }
+    )
+
+    override fun engines(): MainScreenState = EngineSelection(context, GetEngines.Impl(functions))
+    override fun enginesError(error: Throwable): MainScreenState = Error(
+        context,
+        error,
+        { terminated() },
+        { engines() }
     )
     override fun chatPrompt(message: String?): MainScreenState = ChatPrompt(context, message)
     override fun creatingChat(message: String): MainScreenState = CreatingChat(

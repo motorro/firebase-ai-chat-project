@@ -2,6 +2,7 @@ package com.motorro.aichat.state
 
 import com.motorro.aichat.data.MainScreenGesture
 import com.motorro.aichat.data.MainScreenUiState
+import com.motorro.aichat.data.domain.Engine
 import com.motorro.commonstatemachine.CommonStateMachine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,6 +49,7 @@ class CreatingChatTest : TestsWithMocks() {
 
         context = object : MainScreenContext {
             override val factory: MainScreenStateFactory get() = this@CreatingChatTest.factory
+            override var engine: Engine? = Engine("test", "Test engine")
         }
         nextState = object : MainScreenState(context) {
             override fun doStart() = Unit
@@ -70,13 +72,13 @@ class CreatingChatTest : TestsWithMocks() {
     @Test
     fun `should create chat`() = runTest {
         val testPath = "testPath"
-        everySuspending { createChat(isNotNull()) } returns testPath
+        everySuspending { createChat(isNotNull(), isNotNull()) } returns testPath
 
         state.start(stateMachine)
 
         verifyWithSuspend {
             stateMachine.setUiState(isInstanceOf<MainScreenUiState.Loading>())
-            createChat(testMessage)
+            createChat(testMessage, context.engine!!)
             factory.chat(testPath)
             stateMachine.setMachineState(nextState)
         }
@@ -85,7 +87,7 @@ class CreatingChatTest : TestsWithMocks() {
     @Test
     fun `should handle error`() = runTest {
         val testError = RuntimeException("Test error")
-        everySuspending { createChat(isNotNull()) } runs {
+        everySuspending { createChat(isNotNull(), isNotNull()) } runs {
             throw testError
         }
 
@@ -93,7 +95,7 @@ class CreatingChatTest : TestsWithMocks() {
 
         verifyWithSuspend {
             stateMachine.setUiState(isInstanceOf<MainScreenUiState.Loading>())
-            threw { createChat(testMessage) }
+            threw { createChat(testMessage, context.engine!!) }
             factory.chatCreationError(testError, testMessage)
             stateMachine.setMachineState(nextState)
         }
