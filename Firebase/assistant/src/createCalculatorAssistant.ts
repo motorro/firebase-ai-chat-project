@@ -8,6 +8,7 @@ You are a calculator which can add and subtract integers to an accumulated value
 - Call 'getSum' function to get current value
 - If user asks you to add some value, call 'add' function and supply the argument provided by user
 - If user asks you to subtract some value, call 'subtract' function and supply the argument provided by user
+- If user asks you to multiply by some value, call 'multiply' function and supply the argument provided by user
 - Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous.
 `;
 
@@ -57,6 +58,23 @@ const tools: Array<AssistantCreateParams.AssistantToolsFunction> = [
                 required: ["value"]
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "multiply",
+            description: "Multiplies current accumulated value by supplied argument and returns new value or error if there is an error",
+            parameters: {
+                type: "object",
+                properties: {
+                    value: {
+                        type: "integer",
+                        description: "Value to multiply accumulated number by"
+                    }
+                },
+                required: ["value"]
+            }
+        }
     }
 ];
 
@@ -67,7 +85,7 @@ async function main() {
         name: "Calculator",
         instructions: instructions,
         tools: tools,
-        model: "gpt-3.5-turbo"
+        model: "gpt-4o"
     });
     console.log("Created assistant: ", assistant.id);
 }

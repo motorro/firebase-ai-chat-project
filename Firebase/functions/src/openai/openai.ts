@@ -3,7 +3,6 @@ import {
     factory,
     OpenAiAssistantConfig,
     OpenAiChatState,
-    OpenAiWrapper,
     ToolsDispatcher
 } from "@motorro/firebase-ai-chat-openai";
 import {PostCalculateRequest} from "../data/PostCalculateRequest";
@@ -77,7 +76,7 @@ export const closeCalculate = async (uid: string, data: CloseCalculateRequest): 
 
 export const getWorker = (): ChatWorker => {
     return chatFactory.worker(
-        new OpenAiWrapper(new OpenAI({apiKey: openAiApiKey.value()})),
+        new OpenAI({apiKey: openAiApiKey.value()}),
         dispatchers
     );
 };

@@ -27,6 +27,7 @@ const vertexInstructions: VertexAiSystemInstructions<CalculateChatData> = {
         - Call 'getSum' function to get current value
         - If user asks you to add some value, call 'add' function and supply the argument provided by user
         - If user asks you to subtract some value, call 'subtract' function and supply the argument provided by user
+        - If user asks you to multiply by some value, call 'multiply' function and supply the argument provided by user
         - Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous.
     `,
     examples: [
@@ -81,6 +82,20 @@ const vertexInstructions: VertexAiSystemInstructions<CalculateChatData> = {
                                 value: {
                                     type: FunctionDeclarationSchemaType.NUMBER,
                                     description: "Value to subtract from accumulated number"
+                                }
+                            },
+                            required: ["value"]
+                        }
+                    },
+                    {
+                        name: "multiply",
+                        description: "Multiplies current accumulated value by supplied argument and returns new value or error if there is an error",
+                        parameters: {
+                            type: FunctionDeclarationSchemaType.OBJECT,
+                            properties: {
+                                value: {
+                                    type: FunctionDeclarationSchemaType.NUMBER,
+                                    description: "Value to multiply accumulated number by"
                                 }
                             },
                             required: ["value"]
@@ -164,7 +179,8 @@ export const getWorker = (): ChatWorker => {
     );
 
     return chatFactory.worker(
-        chatFactory.ai(model, VERTEXAI_THREADS),
+        model,
+        VERTEXAI_THREADS,
         instructions
     );
 };

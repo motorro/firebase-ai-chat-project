@@ -9,7 +9,7 @@ if (0 === admin.getApps().length) {
 import {
     ChatWorker,
     Logger,
-    setLogger
+    setLogger, toolContinuationSchedulerFactory
 } from "@motorro/firebase-ai-chat-core";
 import {CalculateChatRequest} from "./data/CalculateChatRequest";
 import {PostCalculateRequest} from "./data/PostCalculateRequest";
@@ -31,6 +31,10 @@ import {
     closeCalculate as vertexAiCloseCalculate,
     getWorker as vertexAiGetWorker
 } from "./vertexai/vertexai";
+import {isMultiplyCommand} from "./common/calculator";
+import {firestore} from "firebase-admin";
+import {FirebaseQueueTaskScheduler} from "@motorro/firebase-ai-chat-openai";
+import {getFunctions} from "firebase-admin/functions";
 
 const logger: Logger = {
     d: (...args: unknown[]) => {
@@ -126,5 +130,38 @@ export const calculator = onTaskDispatched(
             }
         }
         logger.w("Worker not found for request:", JSON.stringify(req.data));
+    }
+);
+
+/**
+ * Separate queue to demonstrate resuming continuation
+ */
+const continuationScheduler = toolContinuationSchedulerFactory(
+    firestore(),
+    new FirebaseQueueTaskScheduler(getFunctions(), region)
+);
+
+export const multiply = onTaskDispatched(
+    {
+        secrets: [openAiApiKey],
+        retryConfig: {
+            maxAttempts: 1,
+            minBackoffSeconds: 30
+        },
+        rateLimits: {
+            maxConcurrentDispatches: 6
+        },
+        region: region
+    },
+    async (req) => {
+        logger.d("Multiplier queue", JSON.stringify(req.data));
+        if (isMultiplyCommand(req.data)) {
+            await continuationScheduler.create("calculator").continue(
+                req.data.continuationCommand,
+                {data: {sum: req.data.data.sum * req.data.factor}}
+            );
+        } else {
+            logger.w("Unknown command: ", JSON.stringify(req.data));
+        }
     }
 );
