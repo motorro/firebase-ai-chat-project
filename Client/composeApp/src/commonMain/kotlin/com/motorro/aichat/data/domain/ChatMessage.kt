@@ -10,7 +10,8 @@ data class ChatMessage(
     val author: ChatMessageAuthor,
     val text: String,
     val inBatchSortIndex: Int,
-    val createdAt: Timestamp
+    val createdAt: Timestamp,
+    val meta: MessageMeta? = null
 )
 
 @Serializable

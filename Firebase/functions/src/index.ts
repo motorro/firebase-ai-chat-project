@@ -7,6 +7,8 @@ if (0 === admin.getApps().length) {
 }
 
 import {
+    AssistantConfig,
+    ChatState,
     ChatWorker,
     Logger,
     setLogger, toolContinuationSchedulerFactory
@@ -33,8 +35,9 @@ import {
 } from "./vertexai/vertexai";
 import {isMultiplyCommand} from "./common/calculator";
 import {firestore} from "firebase-admin";
-import {FirebaseQueueTaskScheduler} from "@motorro/firebase-ai-chat-openai";
+import {ChatData, FirebaseQueueTaskScheduler} from "@motorro/firebase-ai-chat-openai";
 import {getFunctions} from "firebase-admin/functions";
+import DocumentReference = firestore.DocumentReference;
 
 const logger: Logger = {
     d: (...args: unknown[]) => {
@@ -75,6 +78,13 @@ export const getEngines = onCall2(options, async (): Promise<GetEnginesResponse>
     return {engines: supportedEngines};
 });
 
+const getChatEngine = async (chatDocumentPath: string): Promise<string> => {
+    const chat = firestore().doc(chatDocumentPath) as DocumentReference<ChatState<AssistantConfig, ChatData>>;
+    const chatData = (await chat.get()).data();
+    const engine = chatData?.config?.assistantConfig?.engine;
+    return <string>engine || "openai";
+};
+
 export const calculate = onCall2(options, async (request: CallableRequest<CalculateChatRequest>) => {
     return ensureAuth(request, async (uid, data): Promise<CalculateChatResponse> => {
         switch (data.engine) {
@@ -87,7 +97,7 @@ export const calculate = onCall2(options, async (request: CallableRequest<Calcul
 });
 export const postToCalculate = onCall2(options, async (request: CallableRequest<PostCalculateRequest>) => {
     return ensureAuth(request, async (uid, data): Promise<CalculateChatResponse> => {
-        switch (data.engine) {
+        switch (await getChatEngine(data.chatDocument)) {
             case "vertexai":
                 return await vertexAiPostToCalculate(uid, data);
             default:
@@ -97,7 +107,7 @@ export const postToCalculate = onCall2(options, async (request: CallableRequest<
 });
 export const closeCalculate = onCall2(options, async (request: CallableRequest<CloseCalculateRequest>) => {
     return ensureAuth(request, async (uid, data): Promise<CalculateChatResponse> => {
-        switch (data.engine) {
+        switch (await getChatEngine(data.chatDocument)) {
             case "vertexai":
                 return await vertexAiCloseCalculate(uid, data);
             default:

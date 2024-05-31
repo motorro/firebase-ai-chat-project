@@ -17,15 +17,17 @@ import {ChatWorker} from "@motorro/firebase-ai-chat-core";
 import OpenAI from "openai";
 import {calculateDispatcher} from "../common/calculator";
 import {CloseCalculateRequest} from "../data/CloseCalculateRequest";
-import {OPENAI_CHATS} from "../data/Collections";
+import {CHATS} from "../data/Collections";
+import {switchToDivider} from "../vertexai/vertexai";
+import {CalculatorMeta} from "../data/MessageMeta";
 
 const db = firestore();
-const chats = db.collection(OPENAI_CHATS) as CollectionReference<OpenAiChatState<CalculateChatData>>;
+const chats = db.collection(CHATS) as CollectionReference<OpenAiChatState<CalculateChatData>>;
 const chatFactory = factory(db, getFunctions(), region);
 const assistantChat = chatFactory.chat<CalculateChatData>("calculator");
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 const dispatchers: Record<string, ToolsDispatcher<any>> = {
-    [NAME]: calculateDispatcher
+    [NAME]: calculateDispatcher(switchToDivider)
 };
 
 export const calculate = async (uid: string, data: CalculateChatRequest): Promise<CalculateChatResponse> => {
@@ -40,7 +42,14 @@ export const calculate = async (uid: string, data: CalculateChatRequest): Promis
         uid,
         {sum: 0},
         config,
-        [data.message]
+        [data.message],
+        undefined,
+        <CalculatorMeta>{
+            aiMessageMeta: {
+                name: NAME,
+                engine: "OpenAi"
+            }
+        }
     );
     return {
         chatDocument: chat.path,

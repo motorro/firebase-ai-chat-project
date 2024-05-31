@@ -1,18 +1,21 @@
 import OpenAI from "openai";
 import ChatCompletionTool = OpenAI.ChatCompletionTool;
-import {AssistantCreateParams} from "openai/src/resources/beta/assistants/assistants";
+import {Beta} from "openai/resources";
+import AssistantCreateParams = Beta.AssistantCreateParams;
+import {FunctionTool} from "openai/src/resources/beta/assistants";
 
 const instructions: string = `
 You are a calculator which can add and subtract integers to an accumulated value
 - The current accumulated value is stored in application state. 
 - Call 'getSum' function to get current value
-- If user asks you to add some value, call 'add' function and supply the argument provided by user
-- If user asks you to subtract some value, call 'subtract' function and supply the argument provided by user
-- If user asks you to multiply by some value, call 'multiply' function and supply the argument provided by user
+- If user asks you to add some value, call 'add' function and supply the argument provided by user.
+- If user asks you to subtract some value, call 'subtract' function and supply the argument provided by user.
+- If user asks you to multiply by some value, call 'multiply' function and supply the argument provided by user.
+- If user asks you to divide by some value, call 'divide' function and provide a short summary of what should be done.
 - Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous.
 `;
 
-const tools: Array<AssistantCreateParams.AssistantToolsFunction> = [
+const tools: Array<FunctionTool> = [
     {
         type: "function",
         function: {
@@ -73,6 +76,27 @@ const tools: Array<AssistantCreateParams.AssistantToolsFunction> = [
                     }
                 },
                 required: ["value"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "divide",
+            description: `
+                Use to call a special division assistant to help divide current accumulated number.
+                The function will return the updated accumulated state and optionally a comment what has been
+                done or what user wants to do next.
+            `,
+            parameters: {
+                type: "object",
+                properties: {
+                    summary: {
+                        type: "string",
+                        description: "A short summary about the division task"
+                    }
+                },
+                required: ["summary"]
             }
         }
     }

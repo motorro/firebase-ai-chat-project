@@ -33,6 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.motorro.aichat.data.MainScreenGesture
 import com.motorro.aichat.data.MainScreenUiState
@@ -116,12 +121,20 @@ fun Chat(
 private fun ChatItem(
     message: ChatMessage
 ) {
+    val name = when {
+        message.isAssistant() -> if (null != message.meta) {
+            "${message.meta.name} (${message.meta.engine})"
+        } else {
+            "AI"
+        }
+        else -> "You"
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 10.dp, vertical = 5.dp)
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .align(if (message.isAssistant()) Alignment.CenterStart else Alignment.CenterEnd)
                 .clip(
@@ -135,6 +148,13 @@ private fun ChatItem(
                 .background(if (message.isAssistant()) Color.Gray else Color.DarkGray)
                 .padding(16.dp)
         ) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = name.capitalize(Locale.current),
+                style = TextStyle.Default.copy(fontWeight = FontWeight.Bold),
+                textAlign = if (message.isAssistant()) TextAlign.Start else TextAlign.End,
+                color = Color.White
+            )
             Text(
                 text = message.text,
                 color = Color.White
