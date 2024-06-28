@@ -5,7 +5,7 @@ import com.motorro.aichat.data.MainScreenUiState
 import io.github.aakira.napier.Napier
 
 class ChatPrompt(context: MainScreenContext, message: String?) : MainScreenState(context) {
-    private var message: String = message ?: "Hello! What is your name?"
+    private var message: String = message ?: "Hello! Please add 20"
 
     override fun doStart() {
         render()

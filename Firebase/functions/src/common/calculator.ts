@@ -1,31 +1,37 @@
 import {
-    ChatDispatchData,
-    FirebaseQueueTaskScheduler,
+    FirebaseQueueTaskScheduler, tagLogger,
     ToolsDispatcher
 } from "@motorro/firebase-ai-chat-openai";
 import {CalculateChatData} from "../data/CalculateChatData";
 import {HttpsError} from "firebase-functions/v2/https";
-import {Continuation, ContinuationCommand, isContinuationCommand, logger} from "@motorro/firebase-ai-chat-core";
-import {DispatchResult, ToolDispatcherReturnValue} from "@motorro/firebase-ai-chat-core/lib/aichat/ToolsDispatcher";
+import {
+    AssistantConfig,
+    ChatState,
+    Continuation,
+    ContinuationCommand, HandOverControl,
+    isContinuationCommand, isStructuredMessage,
+    NewMessage, StructuredMessage
+} from "@motorro/firebase-ai-chat-core";
+import {
+    DispatchResult,
+    ToolDispatcherReturnValue
+} from "@motorro/firebase-ai-chat-core/lib/aichat/ToolsDispatcher";
 import {getFunctions} from "firebase-admin/functions";
-import {region} from "../env";
+import {DIVIDER_NAME, region} from "../env";
+import {CalculatorMeta} from "../data/MessageMeta";
+import {Meta, VertexAiAssistantConfig} from "@motorro/firebase-ai-chat-vertexai";
+
+const logger = tagLogger("Tools");
 
 const taskScheduler = new FirebaseQueueTaskScheduler(getFunctions(), region);
 export const multiplierQueueName = "multiply";
 
-export const calculateDispatcher = (
-    divide: (
-        chatData: ChatDispatchData,
-        args: Record<string, unknown>,
-        continuation: ContinuationCommand<unknown>
-    ) => Promise<ToolDispatcherReturnValue<CalculateChatData>>
-): ToolsDispatcher<CalculateChatData> => async function(
+export const calculateDispatcher: ToolsDispatcher<CalculateChatData> = async (
     data: CalculateChatData,
     name: string,
     args: Record<string, unknown>,
-    continuation: ContinuationCommand<unknown>,
-    chatData: ChatDispatchData
-): Promise<ToolDispatcherReturnValue<CalculateChatData>> {
+    continuation: ContinuationCommand<unknown>
+): Promise<ToolDispatcherReturnValue<CalculateChatData>> => {
     switch (name) {
         case "getSum":
             logger.d("Getting sum. Current state: ", JSON.stringify(data));
@@ -67,21 +73,24 @@ export const calculateDispatcher = (
         case "divide":
             logger.d("Division. Asking Divider for help...");
             logger.d("Arguments:", args);
-            return await divide(chatData, args, continuation);
+            return {
+                result: {
+                    text: <string>args.summary || "User requested a division operation. Ask for the divider.",
+                    data: {
+                        operation: "division"
+                    }
+                }
+            };
         default:
             logger.w(`Unimplemented function call: ${name}. Args:`, JSON.stringify(args));
             throw new HttpsError("unimplemented", "Unimplemented function call");
     }
 };
-export const divideDispatcher = (
-    handBack: (data: CalculateChatData, chatData: ChatDispatchData, args: Record<string, unknown>) => Promise<void>
-): ToolsDispatcher<CalculateChatData> => async function(
+export const divideDispatcher: ToolsDispatcher<CalculateChatData> = async (
     data: CalculateChatData,
     name: string,
-    args: Record<string, unknown>,
-    _continuation: ContinuationCommand<unknown>,
-    chatData: ChatDispatchData
-): Promise<DispatchResult<CalculateChatData> | Continuation<DispatchResult<CalculateChatData>>> {
+    args: Record<string, unknown>
+): Promise<DispatchResult<CalculateChatData> | Continuation<DispatchResult<CalculateChatData>>> => {
     switch (name) {
         case "getSum":
             logger.d("Getting sum. Current state: ", JSON.stringify(data));
@@ -99,12 +108,14 @@ export const divideDispatcher = (
             };
         case "returnToBoss":
             logger.d("Returning to main assistant: ", args);
-            await handBack(data, chatData, args);
-            return Continuation.suspend();
-        case "done":
-            logger.d("Division done: ", args);
-            await handBack(data, chatData, args);
-            return Continuation.suspend();
+            return {
+                result: {
+                    text: <string>args.summary || "Work done",
+                    data: {
+                        operation: "done"
+                    }
+                }
+            };
         default:
             logger.w(`Unimplemented function call: ${name}. Args:`, JSON.stringify(args));
             throw new HttpsError("unimplemented", "Unimplemented function call");
@@ -121,5 +132,78 @@ export function isMultiplyCommand(data: unknown): data is MultiplyCommand {
     return "object" === typeof data && null != data
         && "factor" in data && "number" === typeof data.factor
         && "continuationCommand" in data && isContinuationCommand(data.continuationCommand);
+}
+
+export const handOverProcessor = async (
+    messages: ReadonlyArray<NewMessage>,
+    _chatDocumentPath: string,
+    chatState: ChatState<AssistantConfig, CalculateChatData, CalculatorMeta>,
+    control: HandOverControl<CalculateChatData, Meta, CalculatorMeta>
+): Promise<void> => {
+    const messagesToSave: Array<NewMessage> = [];
+    for (const message of messages) {
+        if (isStructuredMessage(message) && message.data) {
+            switch (message.data["operation"]) {
+                case "division":
+                    await toDivision(message);
+                    return;
+                case "done":
+                    await handBack(message);
+                    return;
+                default:
+                    logger.w("Unknown operation:", JSON.stringify(message));
+                    messagesToSave.push(`Unknown operation:\n${JSON.stringify(message)}`);
+            }
+        }
+        messagesToSave.push(message);
+    }
+    await control.next(messages);
+
+    async function saveSoFar(): Promise<void> {
+        await control.safeUpdate(async (_tx, _updateState, saveMessages) => {
+            saveMessages(messagesToSave);
+        });
+    }
+
+    async function toDivision(message: StructuredMessage): Promise<void> {
+        await saveSoFar();
+        const config: VertexAiAssistantConfig = {
+            engine: "vertexai",
+            instructionsId: DIVIDER_NAME
+        };
+        const meta: CalculatorMeta = {
+            aiMessageMeta: {
+                name: DIVIDER_NAME,
+                engine: "VertexAi"
+            }
+        };
+        logger.d("Switching to divider...", JSON.stringify(message));
+        await control.handOver({
+            config: config,
+            messages: [message.text],
+            chatMeta: meta
+        });
+    }
+    async function handBack(message: StructuredMessage): Promise<void> {
+        logger.d("Switching back...", JSON.stringify(message));
+        await control.handBack([
+            message.text,
+            `The new accumulated value is: ${chatState.data.sum}`
+        ]);
+    }
+};
+
+const operationParseRe = /^\[(\w+)]:\s*(.*)/i;
+export function parseOperation(text: string): NewMessage {
+    const parsed = operationParseRe.exec(text);
+    if (null !== parsed) {
+        return {
+            text: parsed[2] || "",
+            data: {
+                operation: parsed[1].toLowerCase()
+            }
+        };
+    }
+    return text;
 }
 

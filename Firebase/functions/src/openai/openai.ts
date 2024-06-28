@@ -1,9 +1,11 @@
 import {CalculateChatRequest} from "../data/CalculateChatRequest";
 import {
+    DefaultOpenAiMessageMapper,
     factory,
     OpenAiAssistantConfig,
-    OpenAiChatState,
-    ToolsDispatcher
+    OpenAiChatState, OpenAiMessageMapper,
+    ToolsDispatcher,
+    UserMessageParts
 } from "@motorro/firebase-ai-chat-openai";
 import {PostCalculateRequest} from "../data/PostCalculateRequest";
 import {CalculateChatData} from "../data/CalculateChatData";
@@ -13,21 +15,22 @@ import {NAME, openAiApiKey, openAiAssistantId, region} from "../env";
 import {getFunctions} from "firebase-admin/functions";
 import {CalculateChatResponse} from "../data/CalculateChatResponse";
 import DocumentReference = firestore.DocumentReference;
-import {ChatWorker} from "@motorro/firebase-ai-chat-core";
+import {ChatWorker, MessageMiddleware, NewMessage} from "@motorro/firebase-ai-chat-core";
 import OpenAI from "openai";
-import {calculateDispatcher} from "../common/calculator";
+import {calculateDispatcher, handOverProcessor, parseOperation} from "../common/calculator";
 import {CloseCalculateRequest} from "../data/CloseCalculateRequest";
 import {CHATS} from "../data/Collections";
-import {switchToDivider} from "../vertexai/vertexai";
 import {CalculatorMeta} from "../data/MessageMeta";
+import {Message} from "openai/src/resources/beta/threads/messages";
+import {commandSchedulers} from "../common/commandSchedulers";
 
 const db = firestore();
 const chats = db.collection(CHATS) as CollectionReference<OpenAiChatState<CalculateChatData>>;
-const chatFactory = factory(db, getFunctions(), region);
-const assistantChat = chatFactory.chat<CalculateChatData>("calculator");
+const chatFactory = factory(db, getFunctions(), region, undefined, undefined, true, true);
+const assistantChat = chatFactory.chat<CalculateChatData>("calculator", commandSchedulers);
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 const dispatchers: Record<string, ToolsDispatcher<any>> = {
-    [NAME]: calculateDispatcher(switchToDivider)
+    [NAME]: calculateDispatcher
 };
 
 export const calculate = async (uid: string, data: CalculateChatRequest): Promise<CalculateChatResponse> => {
@@ -83,10 +86,33 @@ export const closeCalculate = async (uid: string, data: CloseCalculateRequest): 
     };
 };
 
+const messageMapper: OpenAiMessageMapper = {
+    toAi: function(message: NewMessage): UserMessageParts {
+        return DefaultOpenAiMessageMapper.toAi(message);
+    },
+    fromAi: function(message: Message): NewMessage | undefined {
+        const parts: Array<string> = [];
+        for (const content of message.content) {
+            if ("text" === content.type) {
+                parts.push(content.text.value);
+            }
+        }
+        return parseOperation(parts.join("\n"));
+    }
+};
+
 export const getWorker = (): ChatWorker => {
+    const handOver: MessageMiddleware<CalculateChatData, CalculatorMeta> = chatFactory.handOverMiddleware(
+        "calculator",
+        handOverProcessor,
+        commandSchedulers
+    );
     return chatFactory.worker(
         new OpenAI({apiKey: openAiApiKey.value()}),
-        dispatchers
+        dispatchers,
+        messageMapper,
+        undefined,
+        [handOver]
     );
 };
 
