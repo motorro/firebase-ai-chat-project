@@ -9,7 +9,7 @@ import {parse, stringify} from "envfile";
 import OpenAI from "openai";
 import {Beta, FunctionDefinition} from "openai/resources";
 import {AssistantCreateParams} from "openai/resources/beta";
-import {VertexAiSystemInstructions} from "@motorro/firebase-ai-chat-vertexai";
+import {Meta, VertexAiSystemInstructions} from "@motorro/firebase-ai-chat-vertexai";
 import {printAiExample} from "@motorro/firebase-ai-chat-core";
 import {FunctionDeclarationSchema, FunctionDeclarationsTool} from "@google-cloud/vertexai";
 import {FunctionParameters} from "openai/src/resources/shared";
@@ -65,7 +65,11 @@ async function doUpdateAssistant(id: string, params: AssistantUpdateParams): Pro
     return assistant.id;
 }
 
-function getOpenAiConfig(name: string, model: string, instructions: VertexAiSystemInstructions<CalculateChatData, CalculatorMeta>): AssistantCreateParams {
+function getOpenAiConfig(
+    name: string,
+    model: string,
+    instructions: VertexAiSystemInstructions<CalculateChatData, Meta, CalculatorMeta>
+): AssistantCreateParams {
     let openAiInstructions = instructions.instructions;
     if (instructions.examples && instructions.examples.length > 0) {
         instructions.examples.forEach((it, index) => {

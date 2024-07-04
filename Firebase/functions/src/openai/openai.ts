@@ -29,7 +29,7 @@ const chats = db.collection(CHATS) as CollectionReference<OpenAiChatState<Calcul
 const chatFactory = factory(db, getFunctions(), region, undefined, undefined, true, true);
 const assistantChat = chatFactory.chat<CalculateChatData>("calculator", commandSchedulers);
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-const dispatchers: Record<string, ToolsDispatcher<any>> = {
+const dispatchers: Record<string, ToolsDispatcher<any, any, any>> = {
     [NAME]: calculateDispatcher
 };
 
@@ -112,7 +112,8 @@ export const getWorker = (): ChatWorker => {
         dispatchers,
         messageMapper,
         undefined,
-        [handOver]
+        [handOver],
+        commandSchedulers
     );
 };
 

@@ -1,6 +1,6 @@
 import {
     FirebaseQueueTaskScheduler, tagLogger,
-    ToolsDispatcher
+    ToolsDispatcher, ToolsHandOver
 } from "@motorro/firebase-ai-chat-openai";
 import {CalculateChatData} from "../data/CalculateChatData";
 import {HttpsError} from "firebase-functions/v2/https";
@@ -13,11 +13,12 @@ import {
     NewMessage, StructuredMessage
 } from "@motorro/firebase-ai-chat-core";
 import {
+    ChatDispatchData,
     DispatchResult,
     ToolDispatcherReturnValue
 } from "@motorro/firebase-ai-chat-core/lib/aichat/ToolsDispatcher";
 import {getFunctions} from "firebase-admin/functions";
-import {DIVIDER_NAME, region} from "../env";
+import {DIVIDER_NAME, region, SUBTRACTOR_NAME} from "../env";
 import {CalculatorMeta} from "../data/MessageMeta";
 import {Meta, VertexAiAssistantConfig} from "@motorro/firebase-ai-chat-vertexai";
 
@@ -26,11 +27,13 @@ const logger = tagLogger("Tools");
 const taskScheduler = new FirebaseQueueTaskScheduler(getFunctions(), region);
 export const multiplierQueueName = "multiply";
 
-export const calculateDispatcher: ToolsDispatcher<CalculateChatData> = async (
+export const calculateDispatcher: ToolsDispatcher<CalculateChatData, Meta, CalculatorMeta> = async (
     data: CalculateChatData,
     name: string,
     args: Record<string, unknown>,
-    continuation: ContinuationCommand<unknown>
+    continuation: ContinuationCommand<unknown>,
+    _chatData: ChatDispatchData<CalculatorMeta>,
+    handOver: ToolsHandOver<Meta, CalculatorMeta>
 ): Promise<ToolDispatcherReturnValue<CalculateChatData>> => {
     switch (name) {
         case "getSum":
@@ -48,11 +51,26 @@ export const calculateDispatcher: ToolsDispatcher<CalculateChatData> = async (
                 }
             };
         case "subtract":
-            logger.d("Subtracting: ", args.value);
-            return {
-                data: {
-                    sum: data.sum - (args.value as number)
+            logger.d("Handing-over subtract: ", args.value);
+            handOver.handOver(
+                {
+                    config: {
+                        engine: "vertexai",
+                        instructionsId: SUBTRACTOR_NAME
+                    },
+                    messages: [
+                        `User wants to subtract ${args.value as number}`
+                    ],
+                    chatMeta: {
+                        aiMessageMeta: {
+                            name: SUBTRACTOR_NAME,
+                            engine: "VertexAi"
+                        }
+                    }
                 }
+            );
+            return {
+                result: "The request was passed to Divider. The number is being subtracted. Divider will come back with a new accumulated state"
             };
         case "multiply":
             logger.d("Multiply. Suspending multiplication: ", args.value);
@@ -86,7 +104,45 @@ export const calculateDispatcher: ToolsDispatcher<CalculateChatData> = async (
             throw new HttpsError("unimplemented", "Unimplemented function call");
     }
 };
-export const divideDispatcher: ToolsDispatcher<CalculateChatData> = async (
+export const subtractDispatcher: ToolsDispatcher<CalculateChatData, Meta, CalculatorMeta> = async (
+    data: CalculateChatData,
+    name: string,
+    args: Record<string, unknown>,
+    _continuation: ContinuationCommand<unknown>,
+    _chatData: ChatDispatchData<CalculatorMeta>,
+    handOver: ToolsHandOver<Meta, CalculatorMeta>
+): Promise<DispatchResult<CalculateChatData> | Continuation<DispatchResult<CalculateChatData>>> => {
+    switch (name) {
+        case "getSum":
+            logger.d("Getting sum. Current state: ", JSON.stringify(data));
+            return {
+                data: {
+                    sum: data.sum
+                }
+            };
+        case "subtract":
+            logger.d("Subtracting: ", args.value);
+            return {
+                data: {
+                    sum: data.sum - (args.value as number)
+                }
+            };
+        case "returnToBoss":
+            logger.d("Returning to main assistant: ", args);
+            handOver.handBack([
+                <string>args.summary || "Work done",
+                `New data state: ${JSON.stringify({data: {sum: data.sum}})}`
+            ]);
+            return {
+                result: "Returned to boss"
+            };
+        default:
+            logger.w(`Unimplemented function call: ${name}. Args:`, JSON.stringify(args));
+            throw new HttpsError("unimplemented", "Unimplemented function call");
+    }
+};
+
+export const divideDispatcher: ToolsDispatcher<CalculateChatData, Meta, CalculatorMeta> = async (
     data: CalculateChatData,
     name: string,
     args: Record<string, unknown>
@@ -104,16 +160,6 @@ export const divideDispatcher: ToolsDispatcher<CalculateChatData> = async (
             return {
                 data: {
                     sum: data.sum / (args.value as number)
-                }
-            };
-        case "returnToBoss":
-            logger.d("Returning to main assistant: ", args);
-            return {
-                result: {
-                    text: <string>args.summary || "Work done",
-                    data: {
-                        operation: "done"
-                    }
                 }
             };
         default:

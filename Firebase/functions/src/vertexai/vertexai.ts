@@ -12,7 +12,7 @@ import {
     VertexAiSystemInstructions
 } from "@motorro/firebase-ai-chat-vertexai";
 import {getFunctions} from "firebase-admin/functions";
-import {DIVIDER_NAME, NAME, region} from "../env";
+import {DIVIDER_NAME, NAME, region, SUBTRACTOR_NAME} from "../env";
 import {CalculateChatRequest} from "../data/CalculateChatRequest";
 import {CalculateChatResponse} from "../data/CalculateChatResponse";
 import {PostCalculateRequest} from "../data/PostCalculateRequest";
@@ -24,7 +24,11 @@ import {Content} from "@google-cloud/vertexai/src/types/content";
 import CollectionReference = firestore.CollectionReference;
 import DocumentReference = firestore.DocumentReference;
 import {commandSchedulers} from "../common/commandSchedulers";
-import {calculatorDividerInstructions, calculatorMainInstructions} from "../common/instructions";
+import {
+    calculatorDividerInstructions,
+    calculatorMainInstructions,
+    calculatorSubtractorInstructions
+} from "../common/instructions";
 
 const db = firestore();
 const chats = db.collection(CHATS) as CollectionReference<VertexAiChatState<CalculateChatData>>;
@@ -32,8 +36,9 @@ const chatFactory = factory(db, getFunctions(), region, undefined, undefined, tr
 const assistantChat = chatFactory.chat<CalculateChatData>("calculator", commandSchedulers);
 
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-const instructions: Record<string, VertexAiSystemInstructions<any>> = {
+const instructions: Record<string, VertexAiSystemInstructions<any, any, any>> = {
     [NAME]: calculatorMainInstructions,
+    [SUBTRACTOR_NAME]: calculatorSubtractorInstructions,
     [DIVIDER_NAME]: calculatorDividerInstructions
 };
 
@@ -132,7 +137,8 @@ export const getWorker = (): ChatWorker => {
         instructions,
         messageMapper,
         undefined,
-        [handOver]
+        [handOver],
+        commandSchedulers
     );
 };
 

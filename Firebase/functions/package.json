@@ -23,9 +23,9 @@
   "dependencies": {
     "@google-cloud/tasks": "^5.2.1",
     "@google-cloud/vertexai": "^1.1.0",
-    "@motorro/firebase-ai-chat-core": "^9.0.3",
-    "@motorro/firebase-ai-chat-openai": "^8.5.3",
-    "@motorro/firebase-ai-chat-vertexai": "^3.5.3",
+    "@motorro/firebase-ai-chat-core": "^10.0.2",
+    "@motorro/firebase-ai-chat-openai": "^8.6.2",
+    "@motorro/firebase-ai-chat-vertexai": "^3.6.3",
     "@types/node": "^18.16.3",
     "envfile": "^7.1.0",
     "firebase-admin": "^12.1.0",
