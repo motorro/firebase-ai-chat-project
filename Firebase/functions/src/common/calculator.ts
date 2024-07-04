@@ -88,17 +88,6 @@ export const calculateDispatcher: ToolsDispatcher<CalculateChatData, Meta, Calcu
                 }
             );
             return Continuation.suspend();
-        case "divide":
-            logger.d("Division. Asking Divider for help...");
-            logger.d("Arguments:", args);
-            return {
-                result: {
-                    text: <string>args.summary || "User requested a division operation. Ask for the divider.",
-                    data: {
-                        operation: "division"
-                    }
-                }
-            };
         default:
             logger.w(`Unimplemented function call: ${name}. Args:`, JSON.stringify(args));
             throw new HttpsError("unimplemented", "Unimplemented function call");
