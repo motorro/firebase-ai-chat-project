@@ -1,5 +1,5 @@
 # Firebase OpenAI chat
-This is a sample project for the [firebase-openai-chat](https://github.com/motorro/firebase-openai-chat) library.
+This is a sample project for the [firebase-ai-chat](https://github.com/motorro/firebase-openai-chat) library.
 Take a look at the library docs for the descriptions.
 
 The project runs OpenAI assistant chats on Firebase
