@@ -1,5 +1,5 @@
-# Firebase OpenAI chat
-This is a sample project for the [firebase-ai-chat](https://github.com/motorro/firebase-openai-chat) library.
+# Firebase AI chat
+This is a sample project for the [firebase-ai-chat](https://github.com/motorro/firebase-ai-chat) library.
 Take a look at the library docs for the descriptions.
 
 The project runs OpenAI assistant chats on Firebase
@@ -12,6 +12,7 @@ To run the project:
   - Auth
   - Firestore
   - Cloud functions
+- Enable VertexAI API in your Firebase project
 - Put `.firebaserc` to project directory
 - Check `firestore.rules`
 - Check `firestore.indexes.json`
