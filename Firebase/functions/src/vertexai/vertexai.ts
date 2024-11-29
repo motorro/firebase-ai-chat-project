@@ -1,6 +1,6 @@
 import {CalculateChatData} from "../data/CalculateChatData";
 import {handOverProcessor, parseOperation} from "../common/calculator";
-import {Part, VertexAI} from "@google-cloud/vertexai";
+import {GenerateContentCandidate, Part, VertexAI} from "@google-cloud/vertexai";
 import {firestore} from "firebase-admin";
 import {CHATS, VERTEXAI_THREADS} from "../data/Collections";
 import {
@@ -20,7 +20,6 @@ import {CloseCalculateRequest} from "../data/CloseCalculateRequest";
 import {ChatWorker, MessageMiddleware, NewMessage} from "@motorro/firebase-ai-chat-core";
 import {projectID} from "firebase-functions/params";
 import {CalculatorMeta} from "../data/MessageMeta";
-import {Content} from "@google-cloud/vertexai/src/types/content";
 import CollectionReference = firestore.CollectionReference;
 import DocumentReference = firestore.DocumentReference;
 import {commandSchedulers} from "../common/commandSchedulers";
@@ -98,9 +97,9 @@ const messageMapper: VertexAiMessageMapper = {
     toAi: function(message: NewMessage): Part[] {
         return DefaultVertexAiMessageMapper.toAi(message);
     },
-    fromAi: function(message: Content): NewMessage | undefined {
+    fromAi: function(candidate: GenerateContentCandidate): NewMessage | undefined {
         const text: Array<string> = [];
-        for (const part of message.parts) {
+        for (const part of candidate.content.parts) {
             if (undefined !== part.text) {
                 text.push(part.text);
             }

@@ -7,14 +7,12 @@ if (0 === admin.getApps().length) {
 import * as fs from "fs";
 import {parse, stringify} from "envfile";
 import OpenAI from "openai";
-import {Beta, FunctionDefinition} from "openai/resources";
-import {AssistantCreateParams} from "openai/resources/beta";
+import {FunctionDefinition} from "openai/resources";
+import {AssistantCreateParams, AssistantUpdateParams, FunctionTool} from "openai/resources/beta";
 import {Meta, VertexAiSystemInstructions} from "@motorro/firebase-ai-chat-vertexai";
 import {printAiExample} from "@motorro/firebase-ai-chat-core";
 import {FunctionDeclarationSchema, FunctionDeclarationsTool} from "@google-cloud/vertexai";
 import {FunctionParameters} from "openai/src/resources/shared";
-import AssistantUpdateParams = Beta.AssistantUpdateParams;
-import FunctionTool = Beta.FunctionTool;
 import {calculatorMainInstructions} from "./common/instructions";
 import {CalculateChatData} from "./data/CalculateChatData";
 import {CalculatorMeta} from "./data/MessageMeta";
