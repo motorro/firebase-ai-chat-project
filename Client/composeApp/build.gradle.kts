@@ -1,28 +1,28 @@
 import org.jetbrains.compose.ExperimentalComposeLibrary
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.gms)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.test.mockmp.plugin)
 }
 
 kotlin {
+    jvmToolchain(17)
+
     androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
-    jvm("desktop") {
-        jvmToolchain(17)
-    }
+    jvm("desktop")
 
     listOf(
         iosX64(),
@@ -58,7 +58,6 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
-                implementation(libs.kotlin.test.junit)
                 implementation(libs.kotlin.coroutines.test)
             }
         }
